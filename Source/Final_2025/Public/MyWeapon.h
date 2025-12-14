@@ -38,6 +38,7 @@ public:
 	// Función para disparar. Retorna true si disparó, false si no tenía balas
 	UFUNCTION(BlueprintCallable, Category = "Weapon Logic")
 	bool Fire(FVector StartLocation, FVector Direction);
+	void Reload();
 
 	// Getters para UI
 	UFUNCTION(BlueprintPure, Category = "Weapon Logic")

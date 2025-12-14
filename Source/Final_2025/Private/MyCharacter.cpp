@@ -54,13 +54,42 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-    // Bindings Clásicos (Legacy). Si usas Enhanced Input, ignora esto y llama a las funciones desde BP.
-    //PlayerInputComponent->BindAxis("MoveForward", this, AMyCharacter::AddMovementInput(GetActorForwardVector())); // Pseudocódigo para axis
+    // Movimiento
+    PlayerInputComponent->BindAxis("MoveForward", this, &AMyCharacter::MoveForward);
+    PlayerInputComponent->BindAxis("MoveRight", this, &AMyCharacter::MoveRight);
+    
+    // Cámara
     PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
     PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
     
+    // Acciones
     PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMyCharacter::FireWeapon);
+    PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &AMyCharacter::ReloadWeapon);
     PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AMyCharacter::Interact);
+}
+
+void AMyCharacter::MoveForward(float Value)
+{
+    if (Value != 0.0f)
+    {
+        AddMovementInput(GetActorForwardVector(), Value);
+    }
+}
+
+void AMyCharacter::MoveRight(float Value)
+{
+    if (Value != 0.0f)
+    {
+        AddMovementInput(GetActorRightVector(), Value);
+    }
+}
+
+void AMyCharacter::ReloadWeapon()
+{
+    if (CurrentWeapon)
+    {
+        CurrentWeapon->Reload();
+    }
 }
 
 float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -72,7 +101,7 @@ float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
     if (CurrentHealth <= 0)
     {
         // Lógica de muerte (Reiniciar nivel o mostrar Game Over)
-        UE_LOG(LogTemp, Warning, TEXT("PLAYER MUERTO"));
+        UE_LOG(LogTemp, Warning, TEXT("PLAYER DIED"));
     }
     return ActualDamage;
 }
@@ -121,4 +150,10 @@ void AMyCharacter::AddAmmoToWeapon(int32 Amount)
     {
         CurrentWeapon->AddAmmo(Amount);
     }
+}
+
+void AMyCharacter::OnEnemyKilled()
+{
+    KillCount++;
+    UE_LOG(LogTemp, Warning, TEXT("Total kills: %d"), KillCount);
 }

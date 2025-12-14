@@ -40,7 +40,6 @@ protected:
     float CurrentHealth;
 
 public:
-    // Variables públicas para la lógica del juego
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
     int32 KillCount;
 
@@ -50,6 +49,9 @@ public:
     // Funciones
     virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+    void MoveForward(float Value);
+    void MoveRight(float Value);
+    void ReloadWeapon();
     virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
     // Acciones (BlueprintCallable para poder llamarlas desde Enhanced Input en BP)
@@ -65,4 +67,10 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void AddAmmoToWeapon(int32 Amount);
+    
+    UFUNCTION(BlueprintCallable, Category = "Combat")
+    void OnEnemyKilled();
+    
+    UFUNCTION(BlueprintPure, Category = "Stats")
+    bool IsDead() const { return CurrentHealth <= 0.0f; }
 };

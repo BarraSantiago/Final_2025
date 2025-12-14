@@ -19,39 +19,56 @@ AMyWeapon::AMyWeapon()
 
 bool AMyWeapon::Fire(FVector StartLocation, FVector Direction)
 {
-	if (CurrentClipAmmo <= 0) return false;
+    if (CurrentClipAmmo <= 0)
+    {
+        // Intento de recarga automática
+        if (TotalAmmoCapacity > 0)
+        {
+            Reload();
+        }
+        return false;
+    }
 
-	CurrentClipAmmo--;
+    CurrentClipAmmo--;
 
-	// Configuración del Raycast (Trace)
-	FHitResult Hit;
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
-	QueryParams.AddIgnoredActor(GetOwner()); // Ignorar al personaje que sostiene el arma
+    FHitResult Hit;
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(this);
+    QueryParams.AddIgnoredActor(GetOwner());
 
-	FVector EndLocation = StartLocation + (Direction * MaxRange);
+    FVector EndLocation = StartLocation + (Direction * MaxRange);
+    bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLocation, EndLocation, ECC_Visibility, QueryParams);
 
-	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLocation, EndLocation, ECC_Visibility, QueryParams);
+    DrawDebugLine(GetWorld(), StartLocation, bHit ? Hit.Location : EndLocation, FColor::Red, false, 2.0f);
 
-	// Dibujar línea de depuración (Visible por 2 segundos)
-	DrawDebugLine(GetWorld(), StartLocation, bHit ? Hit.Location : EndLocation, FColor::Red, false, 2.0f);
+    if (bHit && Hit.GetActor())
+    {
+        UGameplayStatics::ApplyDamage(
+            Hit.GetActor(),
+            BaseDamage,
+            GetInstigatorController(),
+            this,
+            UDamageType::StaticClass()
+        );
+    }
 
-	if (bHit && Hit.GetActor())
-	{
-		// Aplicar daño genérico
-		UGameplayStatics::ApplyDamage(
-			Hit.GetActor(),
-			BaseDamage,
-			GetInstigatorController(),
-			this,
-			UDamageType::StaticClass()
-		);
-	}
+    return true;
+}
 
-	return true;
+void AMyWeapon::Reload()
+{
+    if (TotalAmmoCapacity <= 0 || CurrentClipAmmo == ClipSize) return;
+
+    int32 AmmoNeeded = ClipSize - CurrentClipAmmo;
+    int32 AmmoToReload = FMath::Min(AmmoNeeded, TotalAmmoCapacity);
+
+    CurrentClipAmmo += AmmoToReload;
+    TotalAmmoCapacity -= AmmoToReload;
+
+    UE_LOG(LogTemp, Log, TEXT("Reloaded: %d bullets. Total left: %d"), AmmoToReload, TotalAmmoCapacity);
 }
 
 void AMyWeapon::AddAmmo(int32 Amount)
 {
-	TotalAmmoCapacity += Amount;
+    TotalAmmoCapacity += Amount;
 }
